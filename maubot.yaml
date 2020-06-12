@@ -1,0 +1,13 @@
+maubot: 0.1.0
+id: org.casavant.jeff.twilio
+version: 0.0.6
+license: MIT
+modules:
+  - twilio_plugin
+main_class: TwilioPlugin
+database: true
+extra_files:
+  - base-config.yaml
+dependencies:
+  - maubot==0.1.0b1
+  - mautrix==0.5.0b2
