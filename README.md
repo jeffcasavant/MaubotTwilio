@@ -58,3 +58,7 @@ group chat.
   (`casavant.jeff...` vs `org.casavant.jeff...`).  This new format is correct.
   Not sure if it will break current installations of my old plugin if I update
   it.
+
+## Issues
+
+Hit me up in #maubot-casavant-plugins:casavant.org if you have any trouble.
