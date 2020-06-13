@@ -11,7 +11,7 @@ Maubot plugin to bridge in SMS with Twilio.
 * Set the values in the config file
 * In Twilio -> Super Network -> Phone Numbers -> the source number you intend
   to use, under Messaging, set the `A MESSAGE COMES IN` webhook URL to
-  `https://<maubot instance hostname>/<plugin base from maubot.yaml, default
+  `https://<maubot instance hostname>/<plugin base from maubot config, default
   _matrix/maubot/plugin>/<plugin instance name>/sms`
 * `!addsms alias +12223334444` will begin sending room messages via SMS to
   +1-222-333-4444 and routing messages from it to the room in which you ran
