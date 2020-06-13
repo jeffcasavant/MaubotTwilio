@@ -25,6 +25,7 @@ class Config(BaseProxyConfig):
         helper.copy("twilio_account_sid")
         helper.copy("twilio_auth_token")
         helper.copy("twilio_source_number")
+        helper.copy("admins")
 
 
 class WebhookReceiver:
@@ -98,16 +99,30 @@ class TwilioPlugin(Plugin):
     @command.new("removesms", help="Remove an SMS correspondent from this room")
     @command.argument("identifier", required=True)
     async def removesms_handler(self, evt: MessageEvent, identifier: str) -> None:
+        if evt.sender not in self.config.get("admins", []):
+            content = TextMessageEventContent(
+                msgtype=MessageType.TEXT, body="You are not authorized to configure this plugin"
+            )
+            await self.client.send_message(evt.room_id, content)
+            return
+
         self.log.info("Removing SMS correspondent %s for room %s", identifier, evt.room_id)
         await evt.mark_read()
         self.db.unmap(identifier=identifier, room=evt.room_id)
-        content = TextMessageEventContent(msgtype=MessageType.TEXT, format=Format.HTML, body=f"Removed {identifier}")
+        content = TextMessageEventContent(msgtype=MessageType.TEXT, body=f"Removed {identifier}")
         await self.client.send_message(evt.room_id, content)
 
     @command.new("addsms", help="Add an SMS correspondent to this room")
     @command.argument("alias", required=True)
     @command.argument("number", required=True)
     async def addsms_handler(self, evt: MessageEvent, alias: str, number: str) -> None:
+        if evt.sender not in self.config.get("admins", []):
+            content = TextMessageEventContent(
+                msgtype=MessageType.TEXT, body="You are not authorized to configure this plugin"
+            )
+            await self.client.send_message(evt.room_id, content)
+            return
+
         self.log.info("Registering new SMS correspondent %s (%s) for room %s", alias, number, evt.room_id)
         self.db.map(name=alias, number=number, room=evt.room_id)
         await evt.mark_read()
