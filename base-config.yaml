@@ -2,4 +2,4 @@ twilio_account_sid: ''
 twilio_auth_token: ''
 twilio_source_number: ''
 admins:
-  - @me:home.server
+  - '@me:home.server'
