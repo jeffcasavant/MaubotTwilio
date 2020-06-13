@@ -8,7 +8,7 @@ from aiohttp import web
 
 from maubot import Plugin, MessageEvent
 from maubot.handlers import command, event, web as web_handler
-from mautrix.types import EventType, TextMessageEventContent
+from mautrix.types import EventType, TextMessageEventContent, MessageType, Format
 from mautrix.util.config import BaseProxyConfig, ConfigUpdateHelper
 
 from twilio.rest import Client
@@ -28,7 +28,7 @@ class WebhookReceiver:
     def __init__(self):
         print("init webhook receiver")
 
-    # @web_handler.post("/sms")
+    @web_handler.post("/sms")
     async def handle_sms(self, request: web.Request) -> web.Response:
         resp = twiml.Response()
         resp.message(f"Received {request.values['Body']} from {request.values.get('From')}")
@@ -41,12 +41,12 @@ class TwilioPlugin(Plugin):
     async def start(self) -> None:
         await super().start()
         self.config.load_and_update()
-        self.db = Database(self.database)
+        self.db = Database(self.log, self.database)
         self.web_endpoint = WebhookReceiver()
         self.register_handler_class(self.web_endpoint)
 
         self.log.debug("Logging in to twilio")
-        self.client = Client(self.config["twilio_account_sid"], self.config["twilio_auth_token"])
+        self.twilio_client = Client(self.config["twilio_account_sid"], self.config["twilio_auth_token"])
 
         self.webhook_receiver = WebhookReceiver()
 
@@ -69,27 +69,49 @@ class TwilioPlugin(Plugin):
 
         self.log.info("Forwarding message to %d numbers", len(numbers))
         for number in numbers:
-            self.log.debug("Sending message to %s (%s)", number.number_name, number.number)
-            self.client.messages.create(
-                to=number.number, from_=self.config["twilio_source_number"], body=f"{number.room_name}: {content.body}"
+            self.log.debug("Sending message to %s (%s)", number.name, number.number)
+            self.twilio_client.messages.create(
+                to=number.number, from_=self.config["twilio_source_number"], body=f"{evt.sender}: {content.body}"
             )
 
         await evt.mark_read()
 
+    @command.new("removesms", help="Remove an SMS correspondent from this room")
+    @command.argument("identifier", required=True)
+    async def removesms_handler(self, evt: MessageEvent, identifier: str) -> None:
+        self.log.info("Removing SMS correspondent %s for room %s", identifier, evt.room_id)
+        await evt.mark_read()
+        self.db.unmap(identifier=identifier, room=evt.room_id)
+        content = TextMessageEventContent(msgtype=MessageType.TEXT, format=Format.HTML, body=f"Removed {identifier}")
+        await self.client.send_message(evt.room_id, content)
+
     @command.new("addsms", help="Add an SMS correspondent to this room")
-    @command.argument("number", required=True)
     @command.argument("alias", required=True)
-    @command.argument("room_name", required=True)
-    async def addsms_handler(self, evt: MessageEvent, number: str, alias: str, room_name: str) -> None:
-        self.log.info(
-            "Registering new SMS correspondent %s (%s) for room %s (%s)", alias, number, room_name, evt.room_id
-        )
-        self.db.map(number_name=alias, number=number, room=evt.room_id, room_name=room_name)
+    @command.argument("number", required=True)
+    async def addsms_handler(self, evt: MessageEvent, alias: str, number: str) -> None:
+        self.log.info("Registering new SMS correspondent %s (%s) for room %s", alias, number, evt.room_id)
+        self.db.map(name=alias, number=number, room=evt.room_id)
+        await evt.mark_read()
+        content = TextMessageEventContent(msgtype=MessageType.TEXT, body=f"Added {alias} ({number})",)
+        await self.client.send_message(evt.room_id, content)
+
+    @command.new("listsms", help="List all SMS correspondents in this room")
+    async def listsms_handler(self, evt: MessageEvent) -> None:
+        self.log.info("Listing SMS correspondents for room %s", evt.room_id)
         await evt.mark_read()
 
-    @command.new("removesms", help="Remove an SMS correspondent from this room")
-    @command.argument("number", required=True)
-    async def removesms_handler(self, evt: MessageEvent, number: str) -> None:
-        self.log.info("Removing SMS correspondent %s for room %s", number, evt.room_id)
-        self.db.unmap(number=number, room=evt.room_id)
-        await evt.mark_read()
+        members = [{"name": row.name, "number": row.number} for row in self.db.list(room=evt.room_id)]
+
+        plain_members = "\n".join([f"{member['name']}: {member['number']}" for member in members])
+        html_members = "\n".join(
+            [f"<tr><td>{member['name']}</td><td>{member['number']}</td></tr>" for member in members]
+        )
+        header = "Current SMS participants:"
+        formatted_body = f"{header}\n<table>\n{html_members}\n</table>"
+        content = TextMessageEventContent(
+            msgtype=MessageType.TEXT,
+            format=Format.HTML,
+            body=f"{header}\n{plain_members}",
+            formatted_body=formatted_body,
+        )
+        await self.client.send_message(evt.room_id, content)

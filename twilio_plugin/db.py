@@ -3,7 +3,7 @@ import functools
 import logging as log
 import uuid
 
-from sqlalchemy import Column, String, Text, DateTime, Integer, ForeignKeyConstraint, or_, ForeignKey, distinct
+from sqlalchemy import Column, String, Text, DateTime, Integer, ForeignKeyConstraint, or_, ForeignKey, distinct, or_
 from sqlalchemy.orm import sessionmaker, relationship, Session
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.schema import UniqueConstraint
@@ -19,8 +19,7 @@ class NumberRoomMap(Base):
     id = Column(Text, primary_key=True, default=lambda: str(uuid.uuid4()))
     number = Column(Text, index=True, nullable=False)
     room = Column(Text, index=True, nullable=False)
-    number_name = Column(Text)
-    room_name = Column(Text)
+    name = Column(Text)
 
     __table_args__ = (UniqueConstraint("number"),)
 
@@ -38,26 +37,26 @@ def sessionized(f):
 class Database:
     db: Engine
 
-    def __init__(self, db: Engine) -> None:
+    def __init__(self, logger, db: Engine) -> None:
+        self.logger = logger
+        self.logger.debug("Init database")
         self.db = db
         Base.metadata.bind = db
         Base.metadata.create_all(db)
         self.Session = sessionmaker(bind=self.db)
 
     @sessionized
-    def map(self, number, number_name, room, room_name, session=None):
-        row = NumberRoomMap(number=str(number), number_name=str(number_name), room=str(room), room_name=str(room_name))
+    def map(self, number, name, room, session=None):
+        row = NumberRoomMap(number=str(number), name=str(name), room=str(room))
         session.add(row)
         session.commit()
 
     @sessionized
-    def unmap(self, number, room, session=None):
-        rows = session.query(NumberRoomMap).filter_by(number=str(number), room=str(room))
-        if not rows:
-            return False
-        session.delete(rows[0])
+    def unmap(self, identifier, room, session=None):
+        session.query(NumberRoomMap).filter(
+            or_(NumberRoomMap.name == identifier, NumberRoomMap.number == identifier)
+        ).delete()
         session.commit()
-        return True
 
     @sessionized
     def get(self, number=None, room=None, session=None):
@@ -72,3 +71,7 @@ class Database:
             return []
 
         return session.query(NumberRoomMap).filter_by(**kwargs).all()
+
+    @sessionized
+    def list(self, room=None, session=None):
+        return session.query(NumberRoomMap).filter_by(room=str(room)).all()
