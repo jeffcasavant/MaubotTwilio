@@ -2,6 +2,12 @@
 
 Maubot plugin to bridge in SMS with Twilio.
 
+## Dependencies
+
+Your Maubot instance needs to have access to the following Pip packages:
+
+* twilio
+
 ## Usage
 
 * Create a Twilio account and a phone number.  Create a project so you track
