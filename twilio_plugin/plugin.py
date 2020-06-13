@@ -13,6 +13,7 @@ from mautrix.util.config import BaseProxyConfig, ConfigUpdateHelper
 
 from twilio.rest import Client
 from twilio import twiml
+from twilio.base.exceptions import TwilioRestException
 
 from .db import Database
 
@@ -26,7 +27,7 @@ class Config(BaseProxyConfig):
 
 class WebhookReceiver:
     def __init__(self):
-        print("init webhook receiver")
+        print("Init webhook receiver")
 
     @web_handler.post("/sms")
     async def handle_sms(self, request: web.Request) -> web.Response:
@@ -70,9 +71,12 @@ class TwilioPlugin(Plugin):
         self.log.info("Forwarding message to %d numbers", len(numbers))
         for number in numbers:
             self.log.debug("Sending message to %s (%s)", number.name, number.number)
-            self.twilio_client.messages.create(
-                to=number.number, from_=self.config["twilio_source_number"], body=f"{evt.sender}: {content.body}"
-            )
+            try:
+                self.twilio_client.messages.create(
+                    to=number.number, from_=self.config["twilio_source_number"], body=f"{evt.sender}: {content.body}"
+                )
+            except TwilioRestException as exc:
+                self.log.exception("Failed to send to %s (%s)", number.name, number.number)
 
         await evt.mark_read()
 
@@ -92,7 +96,7 @@ class TwilioPlugin(Plugin):
         self.log.info("Registering new SMS correspondent %s (%s) for room %s", alias, number, evt.room_id)
         self.db.map(name=alias, number=number, room=evt.room_id)
         await evt.mark_read()
-        content = TextMessageEventContent(msgtype=MessageType.TEXT, body=f"Added {alias} ({number})",)
+        content = TextMessageEventContent(msgtype=MessageType.TEXT, body=f"Added {alias} ({number})")
         await self.client.send_message(evt.room_id, content)
 
     @command.new("listsms", help="List all SMS correspondents in this room")
