@@ -3,10 +3,10 @@ test:
 	bandit plugin.py
 
 lint:
-	pylint plugin.py
+	pylint twilio_plugin
 
 format:
-	black plugin.py
+	black --line-length 120 twilio_plugin
 
 build:
 	mbc build

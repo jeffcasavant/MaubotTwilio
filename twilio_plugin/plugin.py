@@ -1,8 +1,6 @@
 #! /usr/bin/env python3
 
 from typing import Type
-import sys
-import re
 
 from aiohttp import web
 
@@ -12,7 +10,6 @@ from mautrix.types import EventType, TextMessageEventContent, MessageType, Forma
 from mautrix.util.config import BaseProxyConfig, ConfigUpdateHelper
 
 from twilio.rest import Client
-from twilio import twiml
 from twilio.base.exceptions import TwilioRestException
 
 from .db import Database
@@ -108,7 +105,7 @@ class TwilioPlugin(Plugin):
 
         self.log.info("Removing SMS correspondent %s for room %s", identifier, evt.room_id)
         await evt.mark_read()
-        self.db.unmap(identifier=identifier, room=evt.room_id)
+        self.db.unmap(identifier=identifier)
         content = TextMessageEventContent(msgtype=MessageType.TEXT, body=f"Removed {identifier}")
         await self.client.send_message(evt.room_id, content)
 

@@ -1,11 +1,8 @@
-from typing import List, NamedTuple, Optional
 import functools
-import logging as log
 import uuid
 
-from sqlalchemy import Column, String, Text, DateTime, Integer, ForeignKeyConstraint, or_, ForeignKey, distinct, or_
-from sqlalchemy.orm import sessionmaker, relationship, Session
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy import Column, Text, or_
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -24,12 +21,13 @@ class NumberRoomMap(Base):
     __table_args__ = (UniqueConstraint("number"),)
 
 
-def sessionized(f):
-    @functools.wraps(f)
+def sessionized(func):
+    @functools.wraps(func)
     def wrapped(self, *args, **kwargs):
         kwargs["session"] = self.Session(expire_on_commit=False)
-        return f(self, *args, **kwargs)
+        resp = func(self, *args, **kwargs)
         kwargs["session"].commit()
+        return resp
 
     return wrapped
 
@@ -52,7 +50,7 @@ class Database:
         session.commit()
 
     @sessionized
-    def unmap(self, identifier, room, session=None):
+    def unmap(self, identifier, session=None):
         session.query(NumberRoomMap).filter(
             or_(NumberRoomMap.name == identifier, NumberRoomMap.number == identifier)
         ).delete()
