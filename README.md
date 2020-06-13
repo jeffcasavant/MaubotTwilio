@@ -32,3 +32,7 @@ I am in a roomm with one member who was going to be without her smartphone for a
 
 * Cost: at Twilio rates as of 2020-06-13, you'll pay $.0075 for each ingoing and outgoing SMS, and $1/mo to retain the number you're using.
 * Logging: Twilio has copies of all messages in its SMS log (handy for troubleshooting delivery).  Don't treat SMS as a secure messaging service.
+
+## Esoterica
+
+* The package name for this plugin diverges from my other plugin (`casavant.jeff...` vs `org.casavant.jeff...`).  This new format is correct.  Not sure if it will break current installations of my old plugin if I update it.
