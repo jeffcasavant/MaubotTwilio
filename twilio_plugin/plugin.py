@@ -17,6 +17,8 @@ from twilio.base.exceptions import TwilioRestException
 
 from .db import Database
 
+PREFIX = "<sms>"
+
 
 class Config(BaseProxyConfig):
     def do_update(self, helper: ConfigUpdateHelper) -> None:
@@ -26,14 +28,30 @@ class Config(BaseProxyConfig):
 
 
 class WebhookReceiver:
-    def __init__(self):
-        print("Init webhook receiver")
+    def __init__(self, db, log, client):
+        self.db = db
+        self.log = log
+        self.client = client
 
     @web_handler.post("/sms")
     async def handle_sms(self, request: web.Request) -> web.Response:
-        resp = twiml.Response()
-        resp.message(f"Received {request.values['Body']} from {request.values.get('From')}")
-        return str(resp)
+        params = await request.post()
+
+        number = params["From"]
+        body = params["Body"]
+
+        self.log.debug("Received sms from %s: %s", number, body)
+
+        row = self.db.get(number=number)
+
+        if not row:
+            self.log.info("No room mapping for %s", number)
+        else:
+            row = row[0]
+            content = TextMessageEventContent(msgtype=MessageType.TEXT, body=f"{PREFIX} {row.name}: {body}")
+            await self.client.send_message(row.room, content)
+
+        return web.Response(status=200)
 
 
 class TwilioPlugin(Plugin):
@@ -43,14 +61,11 @@ class TwilioPlugin(Plugin):
         await super().start()
         self.config.load_and_update()
         self.db = Database(self.log, self.database)
-        self.web_endpoint = WebhookReceiver()
-        self.register_handler_class(self.web_endpoint)
 
         self.log.debug("Logging in to twilio")
         self.twilio_client = Client(self.config["twilio_account_sid"], self.config["twilio_auth_token"])
 
-        self.webhook_receiver = WebhookReceiver()
-
+        self.webhook_receiver = WebhookReceiver(self.db, self.log, self.client)
         self.register_handler_class(self.webhook_receiver)
 
     @classmethod
@@ -60,7 +75,7 @@ class TwilioPlugin(Plugin):
     @event.on(EventType.ROOM_MESSAGE)
     async def handler(self, evt: MessageEvent) -> None:
         content = evt.content
-        if not content.msgtype.is_text or content.body.startswith("!"):
+        if not content.msgtype.is_text or content.body.startswith("!") or content.body.startswith(PREFIX):
             return
 
         self.log.debug("Twilio bot handling message in %s: %s", evt.room_id, content.body)

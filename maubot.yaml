@@ -1,11 +1,12 @@
 maubot: 0.1.0
 id: org.casavant.jeff.twilio
-version: 0.0.11
+version: 0.0.13
 license: MIT
 modules:
   - twilio_plugin
 main_class: TwilioPlugin
 database: true
+webapp: true
 extra_files:
   - base-config.yaml
 dependencies:
