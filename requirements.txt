@@ -19,7 +19,7 @@ multidict==4.7.6
 packaging==20.4
 prompt-toolkit==1.0.14
 pycparser==2.20
-Pygments==2.6.1
+Pygments==2.7.4
 PyInquirer==1.0.3
 PyJWT==1.7.1
 pyparsing==2.4.7
