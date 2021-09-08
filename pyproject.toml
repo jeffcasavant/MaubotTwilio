@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "org.casavant.jeff.twilio"
+version = "0.1.1"
+description = "Maubot plugin to bridge rooms to SMS using Twilio"
+authors = ["Jeff Casavant <jeff.casavant@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+maubot = "^0.1.2"
+mautrix = "<0.10"
+twilio = "^6.63.1"
+
+[tool.poetry.dev-dependencies]
+bandit = "^1.7.0"
+black = "^21.8b0"
+safety = "^1.10.3"
+pylint = "^2.10.2"
+isort = "^5.9.3"
+toml = "^0.10.2"
+"ruamel.yaml" = "^0.17.16"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pylint."MESSAGES_CONTROL"]
+disable = [
+    "bad-continuation",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "too-few-public-methods",
+    "too-many-locals",
+    "too-many-statements"
+]
+
+[tool.pylint."FORMAT"]
+max-line-length = 120
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+
+[tool.maubot]
+maubot = "0.1.0"
+modules = ["twilio_plugin"]
+main_class = "TwilioPlugin"
+database = true
+webapp = true
+extra_files = [
+  "base-config.yaml",
+]
