@@ -1,3 +1,5 @@
+# pylint: disable=invalid-name,unused-variable,unused-import
+
 from sqlalchemy import select
 from sqlalchemy.engine.base import Engine
 from alembic.migration import MigrationContext

@@ -1,3 +1,0 @@
-maubot
-mautrix==0.5.0b2
-twilio
