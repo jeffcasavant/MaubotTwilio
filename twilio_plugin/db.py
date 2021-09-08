@@ -33,15 +33,18 @@ def sessionized(func):
 
 
 class Database:
+    # pylint doesn't understand that sessionized uses self
+    # pylint: disable=no-self-use
+
     db: Engine
 
-    def __init__(self, logger, db: Engine) -> None:
+    def __init__(self, logger, db_engine: Engine) -> None:
         self.logger = logger
         self.logger.debug("Init database")
-        self.db = db
-        Base.metadata.bind = db
-        Base.metadata.create_all(db)
-        self.Session = sessionmaker(bind=self.db)
+        self.db = db_engine # pylint: disable=invalid-name
+        Base.metadata.bind = self.db
+        Base.metadata.create_all(self.db)
+        self.Session = sessionmaker(bind=self.db) # pylint: disable=invalid-name
 
     @sessionized
     def map(self, number, name, room, session=None):

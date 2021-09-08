@@ -27,7 +27,7 @@ class Config(BaseProxyConfig):
 
 class WebhookReceiver:
     def __init__(self, db, log, client):
-        self.db = db
+        self.db = db # pylint: disable=invalid-name
         self.log = log
         self.client = client
 
@@ -56,9 +56,10 @@ class TwilioPlugin(Plugin):
     db: Database
 
     async def start(self) -> None:
+        # pylint: disable=attribute-defined-outside-init
         await super().start()
         self.config.load_and_update()
-        self.db = Database(self.log, self.database)
+        self.db = Database(self.log, self.database) # pylint: disable=invalid-name
 
         self.log.debug("Logging in to twilio")
         self.twilio_client = Client(self.config["twilio_account_sid"], self.config["twilio_auth_token"])
@@ -88,7 +89,7 @@ class TwilioPlugin(Plugin):
                 self.twilio_client.messages.create(
                     to=number.number, from_=self.config["twilio_source_number"], body=f"{evt.sender}: {content.body}"
                 )
-            except TwilioRestException as exc:
+            except TwilioRestException:
                 self.log.exception("Failed to send to %s (%s)", number.name, number.number)
 
         await evt.mark_read()
