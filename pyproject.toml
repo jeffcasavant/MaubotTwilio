@@ -1,15 +1,15 @@
 [tool.poetry]
 name = "org.casavant.jeff.twilio"
-version = "0.1.1rc1"
+version = "0.2.0rc1"
 description = "Maubot plugin to bridge rooms to SMS using Twilio"
 authors = ["Jeff Casavant <jeff.casavant@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.7"
-maubot = "^0.1.2"
-mautrix = "<0.10"
-twilio = "^6.63.1"
+python = "^3.8"
+maubot = "^0.3.1"
+mautrix = "^0.15.8"
+twilio = "^7.9.2"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.0"
