@@ -1,6 +1,6 @@
 [project]
 name = "org.casavant.jeff.twilio"
-version = "0.2.0rc1"
+version = "0.3.0"
 description = "Maubot plugin to bridge rooms to SMS using Twilio"
 authors = [{ name = "Jeff Casavant", email = "jeff.casavant@gmail.com" }]
 license = "MIT"
