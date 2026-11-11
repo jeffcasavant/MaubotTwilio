@@ -27,6 +27,12 @@ Your Maubot instance needs to have access to the following Pip packages:
   number.
 * `!listsms` prints a table of the currently bridged numbers and aliases.
 
+## Building
+
+`make build`
+
+This requires `poetry-plugin-export`, which is a Poetry plugin that has to be installed separately.  Install it with [`pip` or `pipx inject`](https://python-poetry.org/docs/plugins/#using-plugins).
+
 ## Motivation
 
 The plugin's design & limitations come from its primary use case: I am in a

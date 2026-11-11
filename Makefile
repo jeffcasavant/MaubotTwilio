@@ -1,8 +1,8 @@
 FILES=twilio_plugin scripts/build_maubot_yaml.py
 
 security:
-	poetry run safety check
-	poetry run bandit $(FILES)
+	poetry run pip-audit
+	poetry run bandit -r $(FILES)
 
 lint:
 	poetry run pylint $(FILES)
