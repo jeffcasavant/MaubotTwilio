@@ -2,10 +2,10 @@ import functools
 import uuid
 
 from sqlalchemy import Column, Text, or_
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.schema import UniqueConstraint
 
 Base = declarative_base()
 
@@ -33,18 +33,15 @@ def sessionized(func):
 
 
 class Database:
-    # pylint doesn't understand that sessionized uses self
-    # pylint: disable=no-self-use
-
     db: Engine
 
     def __init__(self, logger, db_engine: Engine) -> None:
         self.logger = logger
         self.logger.debug("Init database")
-        self.db = db_engine # pylint: disable=invalid-name
+        self.db = db_engine  # pylint: disable=invalid-name
         Base.metadata.bind = self.db
         Base.metadata.create_all(self.db)
-        self.Session = sessionmaker(bind=self.db) # pylint: disable=invalid-name
+        self.Session = sessionmaker(bind=self.db)  # pylint: disable=invalid-name
 
     @sessionized
     def map(self, number, name, room, session=None):

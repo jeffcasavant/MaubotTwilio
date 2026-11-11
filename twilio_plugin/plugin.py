@@ -1,16 +1,17 @@
 #! /usr/bin/env python3
+# pylint can't see the attrs-generated fields on mautrix types
+# pylint: disable=no-member,unexpected-keyword-arg
 
 from typing import Type
 
 from aiohttp import web
-
-from maubot import Plugin, MessageEvent
-from maubot.handlers import command, event, web as web_handler
-from mautrix.types import EventType, TextMessageEventContent, MessageType, Format
+from maubot import MessageEvent, Plugin
+from maubot.handlers import command, event
+from maubot.handlers import web as web_handler
+from mautrix.types import EventType, Format, MessageType, TextMessageEventContent
 from mautrix.util.config import BaseProxyConfig, ConfigUpdateHelper
-
-from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
+from twilio.rest import Client
 
 from .db import Database
 
@@ -27,7 +28,7 @@ class Config(BaseProxyConfig):
 
 class WebhookReceiver:
     def __init__(self, db, log, client):
-        self.db = db # pylint: disable=invalid-name
+        self.db = db  # pylint: disable=invalid-name
         self.log = log
         self.client = client
 
@@ -49,7 +50,8 @@ class WebhookReceiver:
             content = TextMessageEventContent(msgtype=MessageType.TEXT, body=f"{PREFIX} {row.name}: {body}")
             await self.client.send_message(row.room, content)
 
-        return web.Response(status=200)
+        # An empty TwiML document tells Twilio not to reply; without a content type Twilio logs error 12300
+        return web.Response(text="<Response/>", content_type="text/xml")
 
 
 class TwilioPlugin(Plugin):
@@ -59,7 +61,7 @@ class TwilioPlugin(Plugin):
         # pylint: disable=attribute-defined-outside-init
         await super().start()
         self.config.load_and_update()
-        self.db = Database(self.log, self.database) # pylint: disable=invalid-name
+        self.db = Database(self.log, self.database)  # pylint: disable=invalid-name
 
         self.log.debug("Logging in to twilio")
         self.twilio_client = Client(self.config["twilio_account_sid"], self.config["twilio_auth_token"])
